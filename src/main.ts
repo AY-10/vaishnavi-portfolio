@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import './style.css';
 
 // ============================================================
@@ -447,6 +448,7 @@ function initApp(): void {
   initNavbar();
   initSmoothScroll();
   init3DTilt();
+  initThreeJSBackground();
 }
 
 // ============================================================
@@ -591,3 +593,117 @@ function init3DTilt(): void {
     });
   });
 }
+
+// ============================================================
+// Three.js Interactive 3D Background
+// ============================================================
+function initThreeJSBackground(): void {
+  const canvas = document.querySelector('#bg') as HTMLCanvasElement;
+  if (!canvas) return;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.position.setZ(30);
+  camera.position.setX(-3);
+
+  // Geometry
+  const geometry = new THREE.TorusKnotGeometry(10, 2, 200, 32);
+  const material = new THREE.MeshStandardMaterial({ 
+    color: 0x4f8ff7, 
+    wireframe: true,
+    transparent: true,
+    opacity: 0.15
+  });
+  const torus = new THREE.Mesh(geometry, material);
+  scene.add(torus);
+
+  // Particles
+  const particlesGeometry = new THREE.BufferGeometry();
+  const particlesCount = 1500;
+  const posArray = new Float32Array(particlesCount * 3);
+
+  for(let i = 0; i < particlesCount * 3; i++) {
+    posArray[i] = (Math.random() - 0.5) * 100;
+  }
+  
+  particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+  const particlesMaterial = new THREE.PointsMaterial({
+    size: 0.05,
+    color: 0x6c63ff,
+    transparent: true,
+    opacity: 0.6,
+  });
+  
+  const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+  scene.add(particlesMesh);
+
+  // Lights
+  const pointLight = new THREE.PointLight(0xffffff);
+  pointLight.position.set(5, 5, 5);
+  const ambientLight = new THREE.AmbientLight(0xffffff);
+  scene.add(pointLight, ambientLight);
+
+  // Mouse Interaction
+  let mouseX = 0;
+  let mouseY = 0;
+  let targetX = 0;
+  let targetY = 0;
+
+  const windowHalfX = window.innerWidth / 2;
+  const windowHalfY = window.innerHeight / 2;
+
+  document.addEventListener('mousemove', (event) => {
+    mouseX = (event.clientX - windowHalfX);
+    mouseY = (event.clientY - windowHalfY);
+  });
+
+  // Scroll Interaction
+  function moveCamera() {
+    const t = document.body.getBoundingClientRect().top;
+    torus.rotation.x += 0.05;
+    torus.rotation.y += 0.075;
+    torus.rotation.z += 0.05;
+
+    camera.position.z = 30 + t * -0.01;
+    camera.position.x = t * -0.0002;
+    camera.position.y = t * -0.0002;
+  }
+  document.body.onscroll = moveCamera;
+
+  // Animation Loop
+  const clock = new THREE.Clock();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const elapsedTime = clock.getElapsedTime();
+
+    targetX = mouseX * .001;
+    targetY = mouseY * .001;
+
+    torus.rotation.y += 0.005;
+    torus.rotation.x += 0.005;
+
+    particlesMesh.rotation.y = -elapsedTime * 0.05;
+    
+    // Parallax mouse effect
+    particlesMesh.rotation.y += .05 * (targetX - particlesMesh.rotation.y);
+    particlesMesh.rotation.x += .05 * (targetY - particlesMesh.rotation.x);
+    particlesMesh.position.z += -0.05 * (targetY - particlesMesh.rotation.x);
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  // Resize handler
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
+
