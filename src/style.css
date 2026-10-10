@@ -1303,3 +1303,13 @@ ul, ol {
   background: rgba(79, 143, 247, 0.3);
   color: var(--text-primary);
 }
+
+/* ---------- 3D Tilt Effect ---------- */
+.tilt-element {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.tilt-element > * {
+  transform: translateZ(20px);
+}
+

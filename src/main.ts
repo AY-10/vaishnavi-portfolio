@@ -446,6 +446,7 @@ function initApp(): void {
   initScrollAnimations();
   initNavbar();
   initSmoothScroll();
+  init3DTilt();
 }
 
 // ============================================================
@@ -555,3 +556,38 @@ function initSmoothScroll(): void {
 // Boot
 // ============================================================
 document.addEventListener('DOMContentLoaded', initApp);
+
+// ============================================================
+// 3D Tilt Effect
+// ============================================================
+function init3DTilt(): void {
+  const tiltElements = document.querySelectorAll('.project-card, .experience-item, .skill-category, .achievement-card, .education-card, .contact-card');
+  
+  tiltElements.forEach(element => {
+    const el = element as HTMLElement;
+    el.classList.add('tilt-element');
+    
+    el.addEventListener('mousemove', (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const rotateX = ((y - centerY) / centerY) * -5;
+      const rotateY = ((x - centerX) / centerX) * 5;
+      
+      el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+    });
+    
+    el.addEventListener('mouseleave', () => {
+      el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+      el.style.transition = 'transform 0.5s var(--ease-out)';
+    });
+    
+    el.addEventListener('mouseenter', () => {
+      el.style.transition = 'transform 0.1s linear';
+    });
+  });
+}
